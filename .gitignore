@@ -1,0 +1,8 @@
+mocks/
+.env
+uploads/
+
+*.tfstate
+*.tfstate.*
+*.tfvars
+**/.terraform/*

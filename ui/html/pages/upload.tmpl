@@ -1,0 +1,17 @@
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
+    <form class="form" action="/transcribe" method="POST" enctype="multipart/form-data">
+        <label for="audio-file">Upload Audio File</label>
+        <input type="file" name="audio-file" id="audio-file" required accept=".mp3,.wav,.mp4">
+
+        <label for="notion-page-id">Select Notion Page:</label>
+        <select name="notion-page-id" id="notion-page-id" required>
+            <option value="">Select...</option>
+            {{range .NotionPages}}
+                <option value="{{.Id}}">{{.Icon.Emoji}} {{((index .Title 0).Text).Content}}</option>
+            {{end}}
+        </select>
+        <input id="submit-button" class="button" type="submit" value="Transcribe">
+    </form>
+{{end}}

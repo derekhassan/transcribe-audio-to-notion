@@ -1,0 +1,16 @@
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
+
+<div class="card">
+    <div class="glass-bg">
+        <h1>Transcribe to Notes</h1>
+        <div class="link-container">
+            <a class="notion-login" href="https://api.notion.com/v1/oauth/authorize?client_id=140d872b-594c-8088-8063-0037f5d7b9dd&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A4000%2Fauth%2Fcallback">
+                <img src="/static/images/notion-logo.svg" alt="Notion logo" height="24" width="24">
+                <span>Log in with Notion</span>
+            </a>
+        </div>
+    </div>
+</div>
+{{end}}
