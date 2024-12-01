@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~>3.0"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~>3.0"
+    }
   }
 }
 
@@ -35,4 +39,10 @@ provider "azapi" {
   client_id       = var.client_id
   client_secret   = var.client_secret
   tenant_id       = var.tenant_id
+}
+
+provider "azuread" {
+  client_id     = var.client_id
+  client_secret = var.client_secret
+  tenant_id     = var.tenant_id
 }

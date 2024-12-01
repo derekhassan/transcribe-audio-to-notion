@@ -5,11 +5,6 @@ resource "azurerm_resource_group" "project_rg" {
   tags = local.common_tags
 }
 
-resource "random_pet" "ssh_key_name" {
-  prefix    = "ssh"
-  separator = ""
-}
-
 resource "azapi_resource_action" "ssh_public_key_gen" {
   type        = "Microsoft.Compute/sshPublicKeys@2022-11-01"
   resource_id = azapi_resource.ssh_public_key.id
@@ -21,7 +16,7 @@ resource "azapi_resource_action" "ssh_public_key_gen" {
 
 resource "azapi_resource" "ssh_public_key" {
   type      = "Microsoft.Compute/sshPublicKeys@2022-11-01"
-  name      = random_pet.ssh_key_name.id
+  name      = "sshkey-${var.project}-${var.environment}"
   location  = azurerm_resource_group.project_rg.location
   parent_id = azurerm_resource_group.project_rg.id
 }
@@ -156,5 +151,57 @@ resource "azurerm_linux_virtual_machine" "web_server_vm" {
 
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.web_server_diag_sa.primary_blob_endpoint
+  }
+}
+
+# Key Vault
+data "azurerm_client_config" "current" {}
+
+data "azuread_user" "entra_user" {
+  user_principal_name = var.user_principal_name
+}
+
+resource "azurerm_key_vault" "web_server_key_vault" {
+  name                       = "kv-${var.project}-${var.environment}"
+  location                   = azurerm_resource_group.project_rg.location
+  resource_group_name        = azurerm_resource_group.project_rg.name
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  sku_name                   = var.key_vault_sku_name
+  soft_delete_retention_days = 7
+}
+
+resource "azurerm_key_vault_access_policy" "service_principal_access_policy" {
+  key_vault_id = azurerm_key_vault.web_server_key_vault.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = local.current_user_id
+
+  key_permissions    = var.key_permissions
+  secret_permissions = var.secret_permissions
+}
+
+resource "azurerm_key_vault_access_policy" "entra_user_access_policy" {
+  key_vault_id = azurerm_key_vault.web_server_key_vault.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azuread_user.entra_user.object_id
+
+  key_permissions    = var.key_permissions
+  secret_permissions = var.secret_permissions
+}
+
+resource "azurerm_key_vault_key" "web_server_key" {
+  name = "key-test"
+
+  key_vault_id = azurerm_key_vault.web_server_key_vault.id
+  key_type     = var.key_type
+  key_size     = var.key_size
+  key_opts     = var.key_ops
+
+  rotation_policy {
+    automatic {
+      time_before_expiry = "P30D"
+    }
+
+    expire_after         = "P90D"
+    notify_before_expiry = "P29D"
   }
 }
