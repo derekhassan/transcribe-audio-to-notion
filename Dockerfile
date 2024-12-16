@@ -11,4 +11,4 @@ RUN cd ./cmd/web && go build -o /transcribe-to-notion
 
 EXPOSE 4000
 
-CMD ["/transcribe-to-notion"]
+CMD ["/transcribe-to-notion",  "-mockOpenAI=false"]

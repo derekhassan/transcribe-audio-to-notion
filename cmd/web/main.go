@@ -10,6 +10,7 @@ import (
 type config = struct {
 	mockOpenAI bool
 	addr       string
+	appUri     string
 }
 
 type application struct {
@@ -21,6 +22,7 @@ func main() {
 	var cfg config
 
 	flag.StringVar(&cfg.addr, "addr", ":4000", "HTTP network address")
+	flag.StringVar(&cfg.appUri, "appUri", "http://localhost:4000", "The application URI")
 	flag.BoolVar(&cfg.mockOpenAI, "mockOpenAI", true, "Mock OpenAI requests with local file outputs")
 
 	flag.Parse()
@@ -37,6 +39,7 @@ func main() {
 
 	logger.Info("starting server", slog.String("addr", app.config.addr))
 	logger.Info("Mocking OpenAI Requests: ", slog.Bool("mockOpenAI", app.config.mockOpenAI))
+	logger.Info("Application URL: ", slog.String("appUri", app.config.appUri))
 
 	err := http.ListenAndServe(app.config.addr, app.routes())
 

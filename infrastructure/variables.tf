@@ -100,29 +100,7 @@ variable "key_permissions" {
 variable "secret_permissions" {
   type        = list(string)
   description = "List of secret permissions."
-  default     = ["Set"]
-}
-
-variable "key_type" {
-  description = "The JsonWebKeyType of the key to be created."
-  default     = "RSA"
-  type        = string
-  validation {
-    condition     = contains(["EC", "EC-HSM", "RSA", "RSA-HSM"], var.key_type)
-    error_message = "The key_type must be one of the following: EC, EC-HSM, RSA, RSA-HSM."
-  }
-}
-
-variable "key_ops" {
-  type        = list(string)
-  description = "The permitted JSON web key operations of the key to be created."
-  default     = ["decrypt", "encrypt", "sign", "unwrapKey", "verify", "wrapKey"]
-}
-
-variable "key_size" {
-  type        = number
-  description = "The size in bits of the key to be created."
-  default     = 2048
+  default     = ["Set", "Get", "Delete"]
 }
 
 variable "msi_id" {
@@ -134,4 +112,34 @@ variable "msi_id" {
 variable "user_principal_name" {
   type        = string
   description = "The Entra user to give access to key vault"
+}
+
+variable "audio_storage_account_tier" {
+  type        = string
+  default     = "Standard"
+  description = "The storage account tier for audio files"
+}
+
+variable "audio_storage_replication_type" {
+  type        = string
+  default     = "LRS"
+  description = "The storage account replication type for audio files"
+}
+
+variable "openai_api_key" {
+  type        = string
+  description = "API key for using the Whisper and ChatGPT models"
+  sensitive   = true
+}
+
+variable "notion_client_id" {
+  type        = string
+  description = "Client ID for public notion integration"
+  sensitive   = true
+}
+
+variable "notion_client_secret" {
+  type        = string
+  description = "Client secret for public notion integration"
+  sensitive   = true
 }

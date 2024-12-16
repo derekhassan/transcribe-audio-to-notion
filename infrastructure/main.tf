@@ -126,6 +126,10 @@ resource "azurerm_linux_virtual_machine" "web_server_vm" {
   network_interface_ids = [azurerm_network_interface.web_server_nic.id]
   size                  = var.web_server_vm_size_sku
 
+  identity {
+    type = "SystemAssigned"
+  }
+
   tags = local.common_tags
 
   os_disk {
@@ -154,6 +158,24 @@ resource "azurerm_linux_virtual_machine" "web_server_vm" {
   }
 }
 
+# Audio File Storage Account
+resource "azurerm_storage_account" "audio_file_storage" {
+  name                     = "sa${var.project}${var.environment}"
+  resource_group_name      = azurerm_resource_group.project_rg.name
+  location                 = azurerm_resource_group.project_rg.location
+  account_tier             = var.audio_storage_account_tier
+  account_replication_type = var.audio_storage_replication_type
+
+  tags = local.common_tags
+}
+
+resource "azurerm_storage_container" "audio_file_storage_container" {
+  name                  = "audio-files"
+  storage_account_id    = azurerm_storage_account.audio_file_storage.id
+  container_access_type = "private"
+}
+
+
 # Key Vault
 data "azurerm_client_config" "current" {}
 
@@ -168,6 +190,8 @@ resource "azurerm_key_vault" "web_server_key_vault" {
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   sku_name                   = var.key_vault_sku_name
   soft_delete_retention_days = 7
+
+  tags = local.common_tags
 }
 
 resource "azurerm_key_vault_access_policy" "service_principal_access_policy" {
@@ -188,20 +212,44 @@ resource "azurerm_key_vault_access_policy" "entra_user_access_policy" {
   secret_permissions = var.secret_permissions
 }
 
-resource "azurerm_key_vault_key" "web_server_key" {
-  name = "key-test"
-
+resource "azurerm_key_vault_access_policy" "vm_access_policy" {
   key_vault_id = azurerm_key_vault.web_server_key_vault.id
-  key_type     = var.key_type
-  key_size     = var.key_size
-  key_opts     = var.key_ops
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_linux_virtual_machine.web_server_vm.identity[0].principal_id
 
-  rotation_policy {
-    automatic {
-      time_before_expiry = "P30D"
-    }
-
-    expire_after         = "P90D"
-    notify_before_expiry = "P29D"
-  }
+  key_permissions    = var.key_permissions
+  secret_permissions = var.secret_permissions
 }
+
+resource "azurerm_key_vault_secret" "openai_api_key_secret" {
+  name         = "openai-api-key"
+  value        = var.openai_api_key
+  key_vault_id = azurerm_key_vault.web_server_key_vault.id
+
+  tags = local.common_tags
+}
+
+resource "azurerm_key_vault_secret" "notion_client_id_secret" {
+  name         = "notion-client-id"
+  value        = var.notion_client_id
+  key_vault_id = azurerm_key_vault.web_server_key_vault.id
+
+  tags = local.common_tags
+}
+
+resource "azurerm_key_vault_secret" "notion_client_secret_secret" {
+  name         = "notion-client-secret"
+  value        = var.notion_client_secret
+  key_vault_id = azurerm_key_vault.web_server_key_vault.id
+
+  tags = local.common_tags
+}
+
+resource "azurerm_key_vault_secret" "az_storage_primary_account_key_secret" {
+  name         = "az-storage-primary-account-key"
+  value        = azurerm_storage_account.audio_file_storage.primary_access_key
+  key_vault_id = azurerm_key_vault.web_server_key_vault.id
+
+  tags = local.common_tags
+}
+

@@ -233,7 +233,7 @@ func (app *application) notionAuthCallback(w http.ResponseWriter, r *http.Reques
 	tokenRequest := &TokenRequest{
 		GrantType:   "authorization_code",
 		Code:        code,
-		RedirectUri: os.Getenv("APP_BASE_URI") + "/auth/callback",
+		RedirectUri: app.config.appUri + "/auth/callback",
 	}
 
 	marshalled, err := json.Marshal(tokenRequest)
@@ -262,6 +262,11 @@ func (app *application) notionAuthCallback(w http.ResponseWriter, r *http.Reques
 	err = json.Unmarshal(b, tokenResponse)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
+	}
+
+	if tokenResponse.AccessToken == "" {
+		app.serverError(w, r, errors.New("could not get access token"))
 		return
 	}
 

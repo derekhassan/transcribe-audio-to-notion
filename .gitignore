@@ -6,3 +6,5 @@ uploads/
 *.tfstate.*
 *.tfvars
 **/.terraform/*
+
+ssh_key
